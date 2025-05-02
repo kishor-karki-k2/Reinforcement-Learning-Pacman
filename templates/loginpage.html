@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Learning Pac-Man Login" />
+  <title>Pac-Man Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #fff;
+      --secondary-color: #ffd700; /* Pac-Man yellow */
+      --glass-bg: rgba(255, 255, 255, 0.15);
+      --shadow-light: rgba(0, 0, 0, 0.2);
+      --shadow-dark: rgba(0, 0, 0, 0.3);
+      --transition: all 0.3s ease;
+      --bg-dark: #0c0c22; /* Darker blue */
+      --bg-light: #1c1c44; /* Medium blue */
+      --bg-accent: #301a58; /* Deep purple */
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, var(--bg-dark), var(--bg-light), var(--bg-accent));
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease-in-out infinite;
+      overflow-x: hidden;
+      padding: 20px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(97, 76, 175, 0.3) 0%, transparent 15%),
+        radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.2) 0%, transparent 20%),
+        radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.1) 0%, transparent 50%);
+      animation: subtlePulse 8s ease-in-out infinite;
+    }
+
+    .geometric {
+      position: absolute;
+      z-index: 0;
+      opacity: 0.3;
+      animation: float 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    .circle {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(216, 180, 254, 0.2);
+      box-shadow: 0 0 15px rgba(216, 180, 254, 0.3);
+      top: 10%;
+      left: 15%;
+    }
+
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 30px solid transparent;
+      border-right: 30px solid transparent;
+      border-bottom: 50px solid rgba(255, 215, 0, 0.2);
+      top: 70%;
+      right: 20%;
+      animation-duration: 7s;
+    }
+
+    .square {
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.15);
+      transform: rotate(45deg);
+      top: 40%;
+      left: 70%;
+      animation-duration: 5s;
+    }
+
+    .pacman {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at 70% 50%, transparent 30%, var(--secondary-color) 30%);
+      border-radius: 50%;
+      z-index: 0;
+      opacity: 0.7;
+      animation: chase 10s linear infinite;
+    }
+
+    .chaser-ghost {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50% 50% 0 0;
+      background: #ff6666;
+      opacity: 0.7;
+      z-index: 0;
+      animation: chaseGhost 10s linear infinite;
+      box-shadow: 0 0 10px rgba(255, 102, 102, 0.5);
+    }
+
+    .chaser-ghost::before,
+    .chaser-ghost::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      top: 12px;
+    }
+
+    .chaser-ghost::before { left: 8px; }
+    .chaser-ghost::after { right: 8px; }
+
+    .main-heading {
+      color: var(--primary-color);
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(24px, 4vw, 36px);
+      text-shadow: 0 2px 4px var(--shadow-light), 0 0 10px rgba(255, 215, 0, 0.5);
+      margin-bottom: 40px;
+      text-align: center;
+      z-index: 1;
+      animation: flicker 3s infinite ease-in-out;
+    }
+
+    .container {
+      display: flex;
+      width: min(900px, 95%);
+      justify-content: center;
+      z-index: 1;
+      animation: fadeIn 1s ease-out;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: var(--glass-bg);
+      border-radius: 15px;
+      padding: 25px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 20px var(--shadow-dark);
+      transition: var(--transition);
+    }
+
+    .panel:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px var(--shadow-dark);
+    }
+
+    .left-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    h1, h2 {
+      color: var(--primary-color);
+      text-shadow: 0 1px 2px var(--shadow-light);
+    }
+
+    h1 {
+      font-size: clamp(22px, 3.5vw, 28px);
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      font-size: clamp(18px, 2.5vw, 22px);
+      font-family: 'Press Start 2P', cursive;
+      margin-bottom: 10px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    input[type="text"] {
+      padding: 12px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--primary-color);
+      font-size: 16px;
+      outline: none;
+      transition: var(--transition);
+      width: 100%;
+    }
+
+    input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--secondary-color);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    }
+
+    button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 8px;
+      background: var(--secondary-color);
+      color: var(--bg-dark);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 3px 10px var(--shadow-light);
+      align-self: center;
+      width: 100%;
+      max-width: 200px;
+    }
+
+    button:hover {
+      background: #ffaa00;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 215, 0, 0.3);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .ghost {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50% 50% 0 0;
+      opacity: 0.6;
+      animation: float 5s ease-in-out infinite;
+      box-shadow: 0 0 10px currentColor;
+      z-index: 0;
+    }
+
+    .ghost.red { background: #ff6666; top: 15%; left: 15%; }
+    .ghost.pink { background: #ff99cc; top: 65%; right: 20%; }
+    .ghost.cyan { background: #66ffff; bottom: 15%; left: 25%; }
+    .ghost.orange { background: #ff9966; top: 35%; right: 30%; }
+
+    .ghost::before,
+    .ghost::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #fff;
+      border-radius: 50%;
+      top: 12px;
+    }
+
+    .ghost::before { left: 8px; }
+    .ghost::after { right: 8px; }
+
+    /* Game Info Styles */
+    .game-info {
+      color: var(--primary-color);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .character-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .character {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      backdrop-filter: blur(5px);
+      transition: var(--transition);
+    }
+
+    .character:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .character-icon {
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      background: var(--secondary-color);
+      position: relative;
+    }
+
+    .character-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .pacman-icon {
+      background: var(--secondary-color);
+      border-radius: 50%;
+      clip-path: polygon(100% 0, 30% 50%, 100% 100%, 0 100%, 0 0);
+    }
+
+    .blinky-icon {
+      background: #ff6666;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .pinky-icon {
+      background: #ff99cc;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .inky-icon {
+      background: #66ffff;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .clyde-icon {
+      background: #ff9966;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .high-scores {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+    }
+
+    .high-scores h3 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      color: var(--secondary-color);
+      margin-bottom: 10px;
+    }
+
+    .score-list {
+      list-style: none;
+      font-size: 13px;
+    }
+
+    .score-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .scoring-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .score-value {
+      font-weight: 600;
+      color: var(--secondary-color);
+    }
+
+    .dot-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+
+    .power-icon {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    }
+
+    .fruit-icon {
+      width: 18px;
+      height: 18px;
+      background: #ff6347;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .fruit-icon::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: 8px;
+      width: 5px;
+      height: 7px;
+      background: #32cd32;
+      border-radius: 2px;
+    }
+
+    .controls {
+      margin-top: 15px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .controls h3 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      color: var(--secondary-color);
+      margin-bottom: 10px;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .key {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+
+    .key.active {
+      background: rgba(255, 215, 0, 0.3);
+      border-color: var(--secondary-color);
+      color: var(--secondary-color);
+    }
+
+    .game-logo {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .logo-text {
+      display: inline-block;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 18px;
+      color: var(--secondary-color);
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      letter-spacing: 2px;
+      animation: colorPulse 3s infinite;
+    }
+
+    @keyframes colorPulse {
+      0%, 100% { color: var(--secondary-color); }
+      50% { color: #ff9900; }
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .right-panel {
+        order: 2;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        padding: 20px;
+      }
+      .ghost, .pacman, .chaser-ghost, .circle, .square {
+        width: 30px;
+        height: 30px;
+      }
+      .triangle {
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        border-bottom: 25px solid rgba(255, 215, 0, 0.2);
+      }
+      .ghost::before, .ghost::after, .chaser-ghost::before, .chaser-ghost::after {
+        width: 6px;
+        height: 6px;
+        top: 10px;
+      }
+      button {
+        max-width: 100%;
+      }
+      .character-info {
+        justify-content: center;
+      }
+      .scoring-info {
+        justify-content: center;
+      }
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 0.8; transform: scale(0.95); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+
+    @keyframes chase {
+      0% { left: -10%; top: 10%; transform: rotate(0deg); }
+      50% { left: 50%; top: 10%; transform: rotate(360deg); }
+      100% { left: 110%; top: 10%; transform: rotate(720deg); }
+    }
+
+    @keyframes chaseGhost {
+      0% { left: -20%; top: 10%; }
+      50% { left: 40%; top: 10%; }
+      100% { left: 100%; top: 10%; }
+    }
+
+    @keyframes flicker {
+      0%, 100% { opacity: 1; text-shadow: 0 2px 4px var(--shadow-light), 0 0 10px rgba(255, 215, 0, 0.5); }
+      50% { opacity: 0.9; text-shadow: 0 2px 6px var(--shadow-light), 0 0 15px rgba(255, 215, 0, 0.7); }
+    }
+
+    .blinking-text {
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .pill-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    .pill {
+      width: 8px;
+      height: 8px;
+      background: var(--primary-color);
+      border-radius: 50%;
+      margin: 0 3px;
+      opacity: 0.7;
+    }
+
+    .power-pill {
+      width: 12px;
+      height: 12px;
+      background: var(--primary-color);
+      border-radius: 50%;
+      margin: 0 8px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    .admin-button {
+      display: inline-block;
+      background-color: rgba(0, 128, 255, 0.3);
+      color: #FFFFFF;
+      border: 1px solid rgba(0, 128, 255, 0.5);
+      border-radius: 5px;
+      padding: 6px 15px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .admin-button:hover {
+      background-color: rgba(0, 128, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      color: var(--secondary-color);
+    }
+    
+    .admin-button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <h1 class="main-heading" role="heading" aria-level="1">AI Learning Pac-Man</h1>
+  <div class="container" role="main">
+    <div class="panel left-panel" aria-label="Login Section">
+      <h2>Pac-Man Login</h2>
+      <form class="input-group" id="login-form">
+        <input type="text" id="player-name" placeholder="Your Name" required aria-label="Name" />
+        <input type="text" id="player-class" placeholder="Your Class" required aria-label="Class" />
+        <button type="submit">Start Game</button>
+      </form>
+      <div style="text-align: center; margin-top: 15px;">
+        <a href="/admin" class="admin-button">Admin Panel</a>
+      </div>
+      <div class="pill-container" aria-hidden="true">
+        <div class="pill"></div>
+        <div class="pill"></div>
+        <div class="pill"></div>
+        <div class="power-pill"></div>
+        <div class="pill"></div>
+        <div class="pill"></div>
+        <div class="pill"></div>
+      </div>
+      <div class="game-logo">
+        <span class="logo-text blinking-text">READY!</span>
+      </div>
+    </div>
+
+    <div class="panel right-panel" aria-label="Game Information">
+      <h2>Game Info</h2>
+      <p class="game-info" style="color: #ffffff;">Navigate through the maze, eat all the dots and avoid ghosts to advance to the next level. Eat power pellets to turn the tables on the ghosts!</p>
+      
+      <div class="character-info">
+        <div class="character">
+          <div class="character-icon pacman-icon"></div>
+          <span class="character-name" style="color: #ffffff;">Pac-Man</span>
+        </div>
+        <div class="character">
+          <div class="character-icon blinky-icon"></div>
+          <span class="character-name" style="color: #ffffff;">Blinky</span>
+        </div>
+        <div class="character">
+          <div class="character-icon pinky-icon"></div>
+          <span class="character-name" style="color: #ffffff;">Pinky</span>
+        </div>
+        <div class="character">
+          <div class="character-icon inky-icon"></div>
+          <span class="character-name" style="color: #ffffff;">Inky</span>
+        </div>
+        <div class="character">
+          <div class="character-icon clyde-icon"></div>
+          <span class="character-name" style="color: #ffffff;">Clyde</span>
+        </div>
+      </div>
+
+      <div class="scoring-info">
+        <div class="score-item">
+          <div class="dot-icon"></div>
+          <span style="color: #ffffff;">Dot: <span class="score-value">10 pts</span></span>
+        </div>
+        <div class="score-item">
+          <div class="power-icon"></div>
+          <span style="color: #ffffff;">Power: <span class="score-value">50 pts</span></span>
+        </div>
+        <div class="score-item">
+          <div class="fruit-icon"></div>
+          <span style="color: #ffffff;">Fruit: <span class="score-value">100-5000 pts</span></span>
+        </div>
+        <div class="score-item">
+          <div class="character-icon blinky-icon" style="width: 15px; height: 15px;"></div>
+          <span style="color: #ffffff;">Ghost: <span class="score-value">200-1600 pts</span></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <h3>Controls</h3>
+        <div class="keys">
+          <div class="key"></div>
+          <div class="key active">↑</div>
+          <div class="key"></div>
+          <div class="key active">←</div>
+          <div class="key active">↓</div>
+          <div class="key active">→</div>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+  <div class="ghost red" aria-hidden="true"></div>
+  <div class="ghost pink" aria-hidden="true"></div>
+  <div class="ghost cyan" aria-hidden="true"></div>
+  <div class="ghost orange" aria-hidden="true"></div>
+  <div class="geometric circle" aria-hidden="true"></div>
+  <div class="geometric triangle" aria-hidden="true"></div>
+  <div class="geometric square" aria-hidden="true"></div>
+  <div class="pacman" aria-hidden="true"></div>
+  <div class="chaser-ghost" aria-hidden="true"></div>
+  
+  <script>
+    // Script to handle login form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if user is already logged in
+      const playerName = localStorage.getItem('pacman_player_name');
+      const playerClass = localStorage.getItem('pacman_player_class');
+      
+      if (playerName && playerClass) {
+        // If already logged in, register with server again
+        registerPlayer(playerName, playerClass, function() {
+          // Then redirect to game
+          window.location.href = '/game';
+        });
+      }
+      
+      // Handle login form submission
+      const loginForm = document.getElementById('login-form');
+      
+      loginForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const nameInput = document.getElementById('player-name');
+        const classInput = document.getElementById('player-class');
+        
+        const name = nameInput.value.trim();
+        const playerClass = classInput.value.trim();
+        
+        if (name && playerClass) {
+          // Store in localStorage
+          localStorage.setItem('pacman_player_name', name);
+          localStorage.setItem('pacman_player_class', playerClass);
+          
+          // Register with server
+          registerPlayer(name, playerClass, function() {
+            // Redirect to game page
+            window.location.href = '/game';
+          });
+        }
+      });
+      
+      // Function to register player with server
+      function registerPlayer(name, playerClass, callback) {
+        fetch('/register_player', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: name,
+            class: playerClass
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Player registered successfully:', data);
+          if (callback) callback();
+        })
+        .catch(error => {
+          console.error('Error registering player:', error);
+          // Continue anyway
+          if (callback) callback();
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,818 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+    transition: all 0.3s ease;
+}
+
+body {
+    background-color: #121212;
+    background-image: linear-gradient(135deg, #2c3e50 0%, #4a569d 50%, #24243e 100%);
+    color: #f0f0f0;
+    padding: 10px;
+    overscroll-behavior: none; /* Prevent browser pull-to-refresh */
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: gradientBackground 8s infinite;
+    background-blend-mode: overlay;
+    position: relative;
+}
+
+/* Yellow glowing light in background */
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle at center, 
+                rgba(246, 94, 195, 0.103) 0%,
+                rgba(255, 145, 0, 0.151) 30%, 
+                rgba(18, 152, 173, 0.127) 50%,
+                transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    animation: pulseGlow 6s infinite alternate;
+}
+
+@keyframes pulseGlow {
+    0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
+    animation: floatHeader 4s ease-in-out infinite;
+}
+
+@keyframes floatHeader {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Smaller header */
+.small-header {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.small-header h1 {
+    font-size: 1.5rem !important;
+    text-shadow: 0 2px 10px rgba(255, 204, 0, 0.5);
+}
+
+.small-header p {
+    font-size: 0.9rem !important;
+    opacity: 0.9;
+}
+
+/* Main heading styles */
+.main-heading {
+    text-align: center;
+    padding: 15px 0;
+    margin-bottom: 20px;
+    background: transparent; /* Remove background */
+    color: #FFD700; /* Gold color for the heading */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Add text shadow for better visibility */
+}
+
+.main-heading h1 {
+    font-size: 2.5rem;
+    margin: 0;
+    font-weight: bold;
+}
+
+.main-heading p {
+    margin: 5px 0 0;
+    font-size: 1.1rem;
+    color: #FFD700; /* Gold color for subtitle */
+    opacity: 0.9;
+}
+
+header h1 {
+    color: #FFCC00;
+    margin-bottom: 10px;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    display: inline-block;
+}
+
+header h1::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #FFCC00, transparent);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scaleX(0.8); }
+    50% { opacity: 1; transform: scaleX(1.1); }
+}
+
+/* Game Container with enhanced visibility */
+.game-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    flex: 1;
+    margin: 0 auto;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeInMain 1s ease-out forwards;
+    animation-delay: 0.2s;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes fadeInMain {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.game-panel-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    margin-bottom: 20px;
+    gap: 15px;
+    transform: scale(0.98);
+    transition: transform 0.3s ease;
+}
+
+.game-panel-container:hover {
+    transform: scale(1);
+}
+
+.game-panel {
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 480px;
+    max-width: 480px;
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 0;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.8s ease-out, panelGlow 8s infinite !important;
+    border-width: 2px !important;
+}
+
+.game-panel::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.03) 0%,
+        transparent 60%
+    );
+    animation: rotate 20s linear infinite;
+    z-index: -1;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.game-panel h2 {
+    color: #FFCC00;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 1.4rem;
+    text-shadow: 0 2px 8px rgba(255, 204, 0, 0.5);
+    position: relative;
+    animation: fadeIn 1s ease-out;
+}
+
+.game-panel h2::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 204, 0, 0.5), transparent);
+}
+
+.game-stats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 12px;
+    background: rgba(10, 10, 10, 0.7);
+    padding: 8px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease-out;
+    transition: transform 0.3s ease;
+}
+
+.game-stats:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+.score, .lives, .generation, .learning {
+    padding: 4px 8px;
+    background: rgba(30, 30, 30, 0.8);
+    border-radius: 8px;
+    color: #fff;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.score:hover, .lives:hover, .generation:hover, .learning:hover {
+    transform: translateY(-2px);
+    background: rgba(40, 40, 40, 0.8);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.score::after, .lives::after, .generation::after, .learning::after {
+    content: '';
+    position: absolute;
+    top: -180%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.03) 40%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.03) 60%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shine 3s infinite;
+    pointer-events: none;
+}
+
+@keyframes shine {
+    0% { top: -180%; }
+    100% { top: 120%; }
+}
+
+#player-score, #ai-score, #player-lives, #ai-generation, #ai-learning {
+    color: #FFCC00;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(255, 204, 0, 0.3);
+}
+
+/* Different colored mazes */
+#player-game {
+    background-color: #00796b; /* Teal */
+    border: 2px solid rgba(0, 0, 0, 0.7) !important;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.7) !important;
+    animation: gradientBorder 8s infinite !important;
+}
+
+#ai-game {
+    background-color: #9a7cbc; /* Slightly darker purple */
+    border: 2px solid rgba(132, 0, 255, 0.7) !important;
+    box-shadow: 0 0 20px rgba(123, 6, 218, 0.7) !important;
+    animation: gradientBorder 8s infinite reverse !important;
+}
+
+canvas {
+    background-color: #000;
+    border-radius: 12px;
+    margin: 10px 0;
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.3);
+    display: block;
+    max-width: 100%;
+    touch-action: none; /* Prevent touch scroll on mobile */
+    border: 1px solid rgba(255, 204, 0, 0.2);
+    animation: glow 3s infinite;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+canvas:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 30px rgba(255, 204, 0, 0.4);
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+button {
+    padding: 8px 16px;
+    background: rgba(255, 204, 0, 0.8);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+button::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    transition: 0.5s;
+    opacity: 0;
+}
+
+button:hover {
+    background: rgba(255, 215, 0, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+button:hover::after {
+    left: 100%;
+    opacity: 1;
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Animated instructions - now to the left of game panels */
+.game-instructions, .ai-stats {
+    background: rgba(10, 10, 10, 0.7);
+    padding: 15px;
+    border-radius: 16px;
+    width: 220px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 204, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-self: center;
+    transition: transform 0.3s ease;
+}
+
+.game-instructions:hover, .ai-stats:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.game-instructions::after, .ai-stats::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.1),
+        transparent
+    );
+    transform: rotate(35deg);
+    animation: shine 6s infinite;
+    pointer-events: none;
+}
+
+.game-instructions h3, .ai-stats h3 {
+    color: #FFCC00;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    letter-spacing: 1px;
+    position: relative;
+}
+
+.game-instructions h3::after, .ai-stats h3::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 25%;
+    width: 50%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #FFCC00, transparent);
+}
+
+.game-instructions p, .ai-stats p {
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    position: relative;
+    padding-left: 20px;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.game-instructions p:hover, .ai-stats p:hover {
+    transform: translateX(5px);
+    color: #FFCC00;
+}
+
+.game-instructions p::before, .ai-stats p::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: #FFCC00;
+    font-size: 1.2rem;
+    animation: pulse 1.5s infinite alternate;
+}
+
+/* Pacman icon for instructions */
+.pacman-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-color: #FFCC00;
+    border-radius: 50%;
+    margin-right: 10px;
+    position: relative;
+    animation: chomp 0.5s linear infinite;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+}
+
+.pacman-icon::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(20, 20, 20, 0.8);
+    border-radius: 50%;
+    clip-path: polygon(50% 50%, 100% 0%, 100% 100%);
+    animation: rotate 0.5s linear infinite;
+}
+
+@keyframes chomp {
+    0%, 100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    50% { clip-path: polygon(0 0, 100% 50%, 100% 100%, 0 100%); }
+}
+
+/* Enhanced ghost animations */
+.floating-ghost {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px 15px 0 0;
+    z-index: 5;
+    opacity: 0.7;
+    filter: blur(1px);
+    pointer-events: none;
+    animation: float 10s ease-in-out infinite, fadeInOut 10s ease-in-out infinite;
+    transition: all 0.5s ease;
+}
+
+.floating-ghost:hover {
+    filter: blur(0);
+    opacity: 0.9;
+    transform: scale(1.2);
+}
+
+.ghost-red {
+    background-color: #ff0000;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+}
+
+.ghost-pink {
+    background-color: #ffb8ff;
+    box-shadow: 0 0 20px rgba(255, 184, 255, 0.8);
+}
+
+.ghost-cyan {
+    background-color: #00ffff;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+}
+
+.ghost-orange {
+    background-color: #ffb851;
+    box-shadow: 0 0 20px rgba(255, 184, 81, 0.8);
+}
+
+/* Ghost wavy bottom */
+.floating-ghost::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: inherit;
+    border-radius: 0 0 15px 15px;
+    clip-path: polygon(0 0, 25% 100%, 25% 0, 50% 100%, 50% 0, 75% 100%, 75% 0, 100% 100%, 100% 0);
+    animation: waveBottom 2s ease-in-out infinite alternate;
+}
+
+@keyframes waveBottom {
+    0% { clip-path: polygon(0 0, 25% 100%, 25% 0, 50% 100%, 50% 0, 75% 100%, 75% 0, 100% 100%, 100% 0); }
+    100% { clip-path: polygon(0 0, 25% 80%, 25% 0, 50% 100%, 50% 0, 75% 80%, 75% 0, 100% 100%, 100% 0); }
+}
+
+/* Ghost eyes */
+.floating-ghost::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 5px;
+    width: 6px;
+    height: 6px;
+    background-color: white;
+    border-radius: 50%;
+    box-shadow: 10px 0 0 white;
+    animation: blinkEyes 4s infinite;
+}
+
+@keyframes blinkEyes {
+    0%, 48%, 52%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.1); }
+}
+
+/* Float animation */
+@keyframes float {
+    0% { transform: translateY(0) translateX(0) rotate(0deg); }
+    25% { transform: translateY(-20px) translateX(15px) rotate(5deg); }
+    50% { transform: translateY(10px) translateX(30px) rotate(-5deg); }
+    75% { transform: translateY(-15px) translateX(15px) rotate(5deg); }
+    100% { transform: translateY(0) translateX(0) rotate(0deg); }
+}
+
+/* Fade in/out animation */
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; }
+    25%, 75% { opacity: 0.7; }
+}
+
+/* Animation effects */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes glow {
+    0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
+    50% { box-shadow: 0 0 30px rgba(255, 204, 0, 0.5); }
+    100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
+}
+
+/* Gradient glow animation for game frames */
+@keyframes gradientBorder {
+    0% { 
+        border-color: rgba(255, 0, 0, 0.7);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+    }
+    20% { 
+        border-color: rgba(255, 165, 0, 0.7);
+        box-shadow: 0 0 20px rgba(255, 165, 0, 0.7);
+    }
+    40% { 
+        border-color: rgba(255, 255, 0, 0.7);
+        box-shadow: 0 0 20px rgba(255, 255, 0, 0.7);
+    }
+    60% { 
+        border-color: rgba(0, 255, 0, 0.7);
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+    }
+    80% { 
+        border-color: rgba(0, 0, 255, 0.7);
+        box-shadow: 0 0 20px rgba(0, 0, 255, 0.7);
+    }
+    100% { 
+        border-color: rgba(255, 0, 0, 0.7);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+    }
+}
+
+/* Background color animation */
+@keyframes gradientBackground {
+    0% { background-color: rgba(80, 0, 0, 0.2); }
+    20% { background-color: rgba(80, 40, 0, 0.2); }
+    40% { background-color: rgba(80, 80, 0, 0.2); }
+    60% { background-color: rgba(0, 80, 0, 0.2); }
+    80% { background-color: rgba(0, 0, 80, 0.2); }
+    100% { background-color: rgba(80, 0, 0, 0.2); }
+}
+
+/* Subtle panel glow to match current color */
+@keyframes panelGlow {
+    0% { border-color: rgba(255, 0, 0, 0.3); }
+    20% { border-color: rgba(255, 165, 0, 0.3); }
+    40% { border-color: rgba(255, 255, 0, 0.3); }
+    60% { border-color: rgba(0, 255, 0, 0.3); }
+    80% { border-color: rgba(0, 0, 255, 0.3); }
+    100% { border-color: rgba(255, 0, 0, 0.3); }
+}
+
+@keyframes slideIn {
+    0% { transform: translateY(-20px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .game-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .game-panel-container {
+        flex-direction: column;
+        width: 100%;
+        max-width: 480px;
+    }
+    
+    .game-panel {
+        width: 100%;
+        max-width: 480px;
+        min-width: auto;
+        order: 1;
+    }
+    
+    .game-instructions, .ai-stats {
+        width: 100%;
+        max-width: 480px;
+        margin-bottom: 20px;
+        order: 0;
+    }
+    
+    canvas {
+        width: 100% !important;
+        max-width: 450px !important;
+        height: auto !important;
+        aspect-ratio: 450 / 520;
+    }
+}
+
+/* Add this to the CSS to fix tooltip positioning */
+
+/* Fixed tooltip positioning */
+[data-tooltip] {
+    position: relative;
+    cursor: default;
+}
+
+[data-tooltip]::after {
+    content: none;
+    display: none;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Ensure buttons have proper tooltip positioning */
+.game-controls button[data-tooltip]::after {
+    display: none;
+}
+
+/* Add special positioning for stats tooltips to avoid overlap */
+.game-stats [data-tooltip]::after {
+    display: none;
+}
+
+/* Add special positioning for ai-stats tooltips */
+.ai-stats p[data-tooltip]::after {
+    display: none;
+}
+
+/* Game instructions tooltips */
+.game-instructions p[data-tooltip]::after {
+    display: none;
+}
+
+/* Ensure tooltips remain visible when near screen edges */
+@media (max-width: 768px) {
+    [data-tooltip]::after {
+        display: none;
+    }
+}
+
+/* Learning curve modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.8);
+}
+
+.modal-content {
+    background-color: #111;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #00BCA9;
+    box-shadow: 0 0 10px #00BCA9;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 5px;
+    color: #FFF;
+}
+
+.modal-content h2 {
+    text-align: center;
+    color: #FFFF00;
+    margin-bottom: 20px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #FFFF00;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.loading {
+    text-align: center;
+    color: #FFF;
+    padding: 20px;
+    font-size: 18px;
+}
+
+.error {
+    text-align: center;
+    color: #FF6347;
+    padding: 20px;
+    font-size: 18px;
+}
+
+#show-learning {
+    background-color: #00a600;
+    color: #FFF;
+} 

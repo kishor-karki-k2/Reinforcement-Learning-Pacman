@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman AI Learning Game</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v={{ cache_busters.style }}">
+    <style>
+        /* Prevent scrolling when using arrow keys */
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Prevent default arrow key behavior */
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Compact header */
+        .small-header {
+            padding: 10px 0;
+            text-align: center;
+        }
+        
+        .small-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .small-header p {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .game-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 10px;
+            flex: 1;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        /* Updated canvas sizing - allows for proper scaling while preserving aspect ratio */
+        canvas {
+            width: 420px !important; 
+            height: 480px !important;
+            image-rendering: pixelated; /* Keeps pixel art crisp when scaled */
+            display: block; /* Removes bottom margin */
+            margin: 0 auto; /* Center horizontally */
+            border-radius: 0px; /* Rounded corners */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Add shadow for depth */
+        }
+        
+        /* Smaller panel headings */
+        .game-panel h2 {
+            font-size: 1.3rem;
+        }
+        
+        /* Smaller stats and controls */
+        .game-stats {
+            font-size: 0.85rem;
+        }
+        
+        .game-controls button {
+            font-size: 0.85rem;
+            padding: 5px 12px;
+            position: relative; /* For click effect */
+            overflow: hidden; /* For click effect */
+        }
+        
+        /* Game panel with instructions side by side */
+        .game-panel-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            position: relative;
+            overflow: hidden; /* Ensure ghosts don't overflow outside the panel */
+        }
+        
+        .game-instructions, .ai-stats {
+            margin-right: 0;
+            width: 200px;
+            font-size: 0.8rem;
+        }
+        
+        .game-instructions h3, .ai-stats h3 {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .game-instructions p, .ai-stats p {
+            margin: 5px 0;
+        }
+        
+        .game-panel {
+            margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Canvas container to maintain aspect ratio */
+        .canvas-container {
+            width: 420px;
+            height: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin: 0 auto;
+            border-radius: 10px;
+            position: relative;
+            z-index: 5; /* Ensure canvas is above ghosts */
+        }
+        
+        /* Different colored mazes */
+        #player-game {
+            background-color: #006a5e; /* Teal */
+            border: 2px solid rgb(0, 0, 0) !important;
+            box-shadow: 0 0 20px rgb(0, 0, 0) !important;
+            animation: gradientBorder 8s infinite !important;
+        }
+        
+        #ai-game {
+            background-color: #000000; /* Deep purple */
+            border: 2px solid rgba(186, 104, 200, 0.7) !important;
+            box-shadow: 0 0 20px rgba(100, 2, 117, 0.7) !important;
+            animation: gradientBorder 8s infinite reverse !important;
+        }
+        
+        /* Loading animation styles */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-container {
+            text-align: center;
+        }
+        
+        .loading-pacman {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #FFCC00;
+            position: relative;
+            margin: 0 auto 30px;
+            animation: loadingChomp 0.5s linear infinite;
+        }
+        
+        .loading-pacman::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            border-radius: 50%;
+        }
+        
+        .loading-text {
+            color: #FFCC00;
+            font-size: 1.5rem;
+            margin-top: 15px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        .loading-dots {
+            display: inline-block;
+            width: 60px;
+            overflow: hidden;
+            animation: loadingDots 1.2s infinite;
+        }
+        
+        /* Animation effects */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes glow {
+            0% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(255, 204, 0, 0.5); }
+            100% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.3); }
+        }
+        
+        /* Gradient glow animation for game frames */
+        @keyframes gradientBorder {
+            0% { 
+                border-color: rgba(255, 0, 0, 0.7);
+                box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+            }
+            20% { 
+                border-color: rgba(255, 165, 0, 0.7);
+                box-shadow: 0 0 20px rgba(255, 165, 0, 0.7);
+            }
+            40% { 
+                border-color: rgba(255, 255, 0, 0.7);
+                box-shadow: 0 0 20px rgba(255, 255, 0, 0.7);
+            }
+            60% { 
+                border-color: rgba(0, 255, 0, 0.7);
+                box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+            }
+            80% { 
+                border-color: rgba(0, 0, 255, 0.7);
+                box-shadow: 0 0 20px rgba(0, 0, 255, 0.7);
+            }
+            100% { 
+                border-color: rgba(255, 0, 0, 0.7);
+                box-shadow: 0 0 20px rgba(255, 0, 0, 0.7);
+            }
+        }
+        
+        /* Background color animation */
+        @keyframes gradientBackground {
+            0% { background-color: rgba(80, 0, 0, 0.2); }
+            20% { background-color: rgba(80, 40, 0, 0.2); }
+            40% { background-color: rgba(80, 80, 0, 0.2); }
+            60% { background-color: rgba(0, 80, 0, 0.2); }
+            80% { background-color: rgba(0, 0, 80, 0.2); }
+            100% { background-color: rgba(80, 0, 0, 0.2); }
+        }
+        
+        /* Apply gradient background to body */
+        body {
+            animation: gradientBackground 8s infinite;
+            background-image: linear-gradient(135deg, #2c3e50 0%, #4a569d 50%, #24243e 100%);
+            background-blend-mode: overlay;
+        }
+        
+        /* Subtle panel glow to match current color */
+        @keyframes panelGlow {
+            0% { border-color: rgba(255, 0, 0, 0.3); }
+            20% { border-color: rgba(255, 165, 0, 0.3); }
+            40% { border-color: rgba(255, 255, 0, 0.3); }
+            60% { border-color: rgba(0, 255, 0, 0.3); }
+            80% { border-color: rgba(0, 0, 255, 0.3); }
+            100% { border-color: rgba(255, 0, 0, 0.3); }
+        }
+        
+        /* Apply subtle glow to game panels */
+        .game-panel {
+            animation: fadeIn 0.8s ease-out, panelGlow 8s infinite !important;
+            border-width: 2px !important;
+        }
+        
+        @keyframes slideIn {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        
+        /* Loading animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-container {
+            text-align: center;
+        }
+        
+        .loading-pacman {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #FFCC00;
+            position: relative;
+            margin: 0 auto 30px;
+            animation: loadingChomp 0.5s linear infinite;
+        }
+        
+        .loading-pacman::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #121212;
+            border-radius: 50%;
+        }
+        
+        .loading-text {
+            color: #FFCC00;
+            font-size: 1.5rem;
+            margin-top: 15px;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+        }
+        
+        .loading-dots {
+            display: inline-block;
+            width: 60px;
+            overflow: hidden;
+            animation: loadingDots 1.2s infinite;
+        }
+        
+        @keyframes loadingDots {
+            0% { width: 0; }
+            50% { width: 30px; }
+            100% { width: 60px; }
+        }
+        
+        /* Apply animations */
+        .game-panel {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        .game-stats {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        button:hover {
+            animation: pulse 0.6s infinite;
+        }
+        
+        canvas {
+            animation: glow 3s infinite;
+        }
+        
+        .game-panel h2 {
+            animation: fadeIn 1s ease-out;
+        }
+        
+        /* Player info styles */
+        .player-info {
+            margin-top: 10px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 8px 15px;
+            color: #FFCC00;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            animation: fadeIn 1s ease-out;
+        }
+        
+        #display-name, #display-class {
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+        
+        .logout-btn {
+            background-color: rgba(255, 0, 0, 0.3);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(255, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .admin-link {
+            background-color: rgba(0, 128, 255, 0.3);
+            color: #FFFFFF;
+            border: 1px solid rgba(0, 128, 255, 0.5);
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .admin-link:hover {
+            background-color: rgba(0, 128, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        /* Enhanced tooltips */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+        
+        [data-tooltip]::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        [data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Visual feedback on control buttons */
+        .game-controls button:active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            animation: buttonPress 0.3s ease-out;
+        }
+        
+        @keyframes buttonPress {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 1200px) {
+            .game-container {
+                padding: 5px;
+            }
+            
+            canvas {
+                width: 380px !important;
+                height: 440px !important;
+            }
+            
+            .canvas-container {
+                width: 380px;
+                height: 440px;
+            }
+            
+            .game-instructions, .ai-stats {
+                width: 180px;
+            }
+        }
+        
+        @media (max-height: 800px) {
+            .small-header {
+                padding: 5px 0;
+            }
+            
+            .small-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .game-panel-container {
+                margin-bottom: 10px;
+            }
+            
+            .game-stats {
+                margin-bottom: 5px;
+            }
+            
+            .game-controls {
+                margin-bottom: 5px;
+            }
+        }
+        
+        /* Enhanced game stats display */
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            padding: 8px 15px;
+            margin-bottom: 15px;
+            width: 100%;
+            color: #fff;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .game-stats .score,
+        .game-stats .generation {
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        
+        .game-stats span {
+            color: #ffd700;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .speed-dropdown {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+        
+        .speed-dropdown span {
+            margin-right: 5px;
+            color: #fff;
+            font-weight: normal;
+        }
+        
+        #speed-selector {
+            background-color: rgba(0, 0, 0, 0.3);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.7);
+            border-radius: 4px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+        
+        #speed-selector:hover {
+            background-color: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        #speed-selector option {
+            background-color: #121212;
+            color: #ffd700;
+        }
+        
+        /* Modal styles - improved layout */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(3px);
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: #121824;
+            margin: 2% auto;
+            padding: 25px 30px;
+            width: 92%;
+            max-width: 1300px;
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(100, 100, 200, 0.2);
+            color: #fff;
+        }
+        
+        .modal-content h2 {
+            color: #3ac7ff;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 15px;
+            font-size: 1.6rem;
+            text-shadow: 0 0 10px rgba(58, 199, 255, 0.5);
+        }
+        
+        /* Learning stats section with better organization */
+        .learning-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+            background-color: rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid rgba(100, 100, 200, 0.1);
+        }
+        
+        .stat-box {
+            background-color: rgba(30, 40, 60, 0.6);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 6px;
+            padding: 12px;
+            min-width: 130px;
+            text-align: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.3);
+            border-color: rgba(100, 150, 255, 0.4);
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 6px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3ac7ff;
+            text-shadow: 0 0 8px rgba(58, 199, 255, 0.3);
+        }
+        
+        /* Improved graph container */
+        #learning-graph-container {
+            width: 100%;
+            height: 500px;
+            aspect-ratio: 21/9;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        
+        .refresh-plot {
+            position: static;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            font-size: 18px;
+        }
+        
+        .refresh-plot:hover {
+            background-color: rgba(20, 80, 120, 0.7);
+            transform: rotate(180deg);
+            color: white;
+            border-color: rgba(100, 200, 255, 0.5);
+            box-shadow: 0 0 15px rgba(0, 150, 255, 0.4);
+        }
+        
+        .refresh-success {
+            background-color: rgba(0, 200, 100, 0.7) !important;
+            border-color: rgba(0, 255, 100, 0.6) !important;
+            box-shadow: 0 0 15px rgba(0, 255, 100, 0.5) !important;
+            transform: rotate(360deg) !important;
+            transition: all 0.5s ease !important;
+        }
+        
+        /* For browsers that don't support aspect-ratio */
+        @supports not (aspect-ratio: 21/9) {
+            #learning-graph-container {
+                width: 100%;
+                height: 450px; /* Default height */
+                max-width: 1050px; /* 21:9 ratio based on 450px height */
+                margin: 0 auto;
+            }
+        }
+        
+        .close {
+            color: rgba(255, 255, 255, 0.7);
+            float: right;
+            font-size: 26px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+        
+        .close:hover {
+            color: #fff;
+            background-color: rgba(255, 100, 100, 0.2);
+            transform: rotate(90deg);
+        }
+        
+        #show-learning {
+            background: linear-gradient(to right, rgba(0, 120, 255, 0.8), rgba(0, 180, 255, 0.8));
+            border: 1px solid rgba(0, 150, 255, 0.5);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 120, 255, 0.4);
+            transition: all 0.2s ease;
+        }
+        
+        #show-learning:hover {
+            background: linear-gradient(to right, rgba(0, 140, 255, 0.9), rgba(0, 200, 255, 0.9));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 120, 255, 0.6);
+        }
+        
+        /* Responsive layout improvements */
+        @media (min-width: 1200px) {
+            #learning-graph-container {
+                width: 100%;
+                height: 520px;
+            }
+            
+            .modal-content {
+                max-width: 1400px;
+                padding: 30px 35px;
+            }
+            
+            .learning-stats {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #learning-graph-container {
+                height: 380px;
+                aspect-ratio: 16/9;
+            }
+            
+            .stat-box {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+                margin: 5% auto;
+            }
+            
+            .stat-value {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Learning Graph Modal Styling */
+        #learning-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(3px);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .modal-content {
+            position: relative;
+            background-color: #121824;
+            margin: 3% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .learning-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .learning-header h2 {
+            color: #3ac7ff;
+            margin: 0;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(58, 199, 255, 0.5);
+        }
+        
+        .learning-close {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .learning-close:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .learning-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.25);
+        }
+        
+        .stat-box {
+            background-color: rgba(20, 30, 50, 0.7);
+            padding: 12px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(100, 150, 255, 0.1);
+        }
+        
+        .stat-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background-color: rgba(30, 40, 60, 0.7);
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .stat-trend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .positive {
+            color: #4caf50;
+        }
+        
+        .negative {
+            color: #f44336;
+        }
+        
+        .improvement-box {
+            grid-column: span 2;
+            background-color: rgba(20, 35, 55, 0.8);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+        }
+        
+        #learning-graph {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+            .learning-stats {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .improvement-box {
+                grid-column: span 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                padding: 20px;
+                margin: 5% auto;
+                width: 95%;
+            }
+            
+            .learning-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            #learning-graph-container {
+                height: 400px;
+            }
+            
+            .learning-header h2 {
+                font-size: 20px;
+            }
+        }
+        
+        /* Loading and error messages in graph container */
+        .loading-message, .error-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .error-message {
+            color: rgba(255, 99, 71, 0.9);
+            background-color: rgba(50, 0, 0, 0.2);
+            border: 1px solid rgba(255, 99, 71, 0.3);
+            border-radius: 8px;
+        }
+        
+        .learning-plot-image {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .learning-plot-image:hover {
+            transform: scale(1.01);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+        }
+        
+        .floating-ghost {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor);
+            opacity: 0.4;
+            z-index: -1;
+            transform-origin: center;
+            will-change: transform; /* Performance optimization for animation */
+            pointer-events: none; /* Don't interfere with clicks */
+        }
+        
+        .ghost-red {
+            background-image: url('../static/img/ghost-red.png');
+            color: rgba(255, 0, 0, 0.5);
+        }
+        
+        .ghost-pink {
+            background-image: url('../static/img/ghost-pink.png');
+            color: rgba(255, 105, 180, 0.5);
+        }
+        
+        .ghost-blue {
+            background-image: url('../static/img/ghost-blue.png');
+            color: rgba(0, 150, 255, 0.5);
+        }
+        
+        .ghost-orange {
+            background-image: url('../static/img/ghost-orange.png');
+            color: rgba(255, 165, 0, 0.5);
+        }
+        
+        .ghost-vulnerable {
+            background-image: url('../static/img/ghost-vulnerable.png');
+            color: rgba(0, 0, 255, 0.5);
+        }
+        
+        /* Full-screen ghost container */
+        #floating-ghosts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -10;
+            pointer-events: none;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-container">
+            <div class="loading-pacman"></div>
+            <div class="loading-text">Loading Game<span class="loading-dots">...</span></div>
+        </div>
+    </div>
+
+    <header class="small-header">
+        <h1>Pacman AI Learning Game</h1>
+        <p>Train the AI by playing the game yourself!</p>
+        <div id="player-info" class="player-info">
+            Welcome <span id="display-name"></span> from <span id="display-class"></span>!
+            <button id="logout-btn" class="logout-btn">Logout</button>
+        </div>
+    </header>
+    
+    <!-- Floating Ghosts Container -->
+    <div id="floating-ghosts-container"></div>
+    
+    <div class="game-container">
+        <div class="game-panel-container">
+            <div class="game-instructions">
+                <div class="ghost-icon"></div>
+                <h3><span class="pacman-icon"></span>HOW TO PLAY</h3>
+                <p>Use arrow keys to move</p>
+                <p>Eat all dots to win</p>
+                <p>Avoid ghosts</p>
+                <p>Power pellets help</p>
+            </div>
+            <div class="game-panel">
+                <h2>Your Game</h2>
+                <div class="game-stats">
+                    <div class="score">Score:<span id="player-score">0</span></div>
+                    <div class="lives">Lives:<span id="player-lives">3</span></div>
+                </div>
+                <div class="game-controls">
+                    <button id="start-game">Start Game</button>
+                    <button id="reset-game">Reset Game</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="player-game" width="420" height="480"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-panel-container">
+            <div class="ai-stats">
+                <div class="ghost-icon" style="background-color: #00BFFF;"></div>
+                <h3><span class="pacman-icon"></span>AI LEARNING</h3>
+                <p>AI learns from you</p>
+                <p>Each Iteration improves</p>
+                <p>Watch AI adapt</p>
+                <p>Goal: Beat your score</p>
+            </div>
+            <div class="game-panel">
+                <h2>AI Game</h2>
+                <div class="game-stats">
+                    <div class="score">Score:<span id="ai-score">0</span></div>
+                    <div class="speed-dropdown">
+                        <span>Speed:</span>
+                        <select id="speed-selector">
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="2">2x</option>
+                            <option value="5">5x</option>
+                            <option value="10">10x</option>
+                            <option value="15">15x</option>
+                        </select>
+                    </div>
+                    <div class="generation">Iteration:<span id="ai-generation">1</span>/200</div>
+                </div>
+                <div class="game-controls">
+                    <button id="start-ai">Start AI</button>
+                    <button id="reset-ai">Reset AI</button>
+                    <button id="show-learning">Show Learning</button>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="ai-game" width="420" height="480"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add modal for displaying the Q-learning graph -->
+    <div id="learning-modal" class="modal">
+        <div class="modal-content">
+            <div class="learning-header">
+                <h2>Q-Learning Progress</h2>
+                <div class="header-buttons">
+                    <button class="refresh-plot" id="refresh-plot" title="Refresh plot">⟳</button>
+                    <span class="learning-close">&times;</span>
+                </div>
+            </div>
+            
+            <div class="learning-stats">
+                <div class="stat-box">
+                    <div class="stat-label">Total Episodes</div>
+                    <div class="stat-value" id="total-episodes">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Average Reward</div>
+                    <div class="stat-value" id="avg-reward">0.00</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Best Reward</div>
+                    <div class="stat-value" id="best-reward">0.00</div>
+                    <div class="stat-trend positive">↑</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Worst Reward</div>
+                    <div class="stat-value" id="worst-reward">0.00</div>
+                    <div class="stat-trend negative">↓</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Iteration</div>
+                    <div class="stat-value" id="current-generation">1</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">States Learned</div>
+                    <div class="stat-value" id="q-table-size">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Exploration Rate</div>
+                    <div class="stat-value" id="exploration-rate">0.0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Last Score</div>
+                    <div class="stat-value" id="last-score">0</div>
+                </div>
+                <div class="stat-box improvement-box">
+                    <div class="stat-label">Learning Improvement</div>
+                    <div class="stat-value" id="learning-improvement">-</div>
+                </div>
+            </div>
+            
+            <div id="learning-graph-container">
+                <!-- Matplotlib plot will be inserted here -->
+                <div class="loading-message">Click "Show Learning" to generate plot</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load scripts at the end for faster page loading -->
+    <!-- Game scripts -->
+    <script src="{{ url_for('static', filename='js/constants.js') }}?v={{ cache_busters.constants }}"></script>
+    <script src="{{ url_for('static', filename='js/manual_game.js') }}?v={{ cache_busters.manual_game }}"></script>
+    <script src="{{ url_for('static', filename='js/ai_game.js') }}?v={{ cache_busters.ai_game }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v={{ cache_busters.main }}"></script>
+    <script>
+        // Prevent arrow keys from scrolling the page
+        window.addEventListener("keydown", function(e) {
+            // Space and arrow keys
+            if([32, 37, 38, 39, 40].indexOf(e.keyCode) > -1) {
+                e.preventDefault();
+            }
+        }, false);
+    
+        // Additional initialization to ensure everything works properly
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in
+            const playerName = localStorage.getItem('pacman_player_name');
+            const playerClass = localStorage.getItem('pacman_player_class');
+            
+            if (!playerName || !playerClass) {
+                // Redirect to login page if not logged in
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Display player info
+            document.getElementById('display-name').textContent = playerName;
+            document.getElementById('display-class').textContent = playerClass;
+            
+            // Handle logout
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                localStorage.removeItem('pacman_player_name');
+                localStorage.removeItem('pacman_player_class');
+                window.location.href = '/login';
+            });
+            
+            // Ensure both canvases are visible
+            const playerCanvas = document.getElementById('player-game');
+            const aiCanvas = document.getElementById('ai-game');
+            
+            if (playerCanvas) {
+                playerCanvas.style.display = 'block';
+            }
+            
+            if (aiCanvas) {
+                aiCanvas.style.display = 'block';
+            }
+            
+            // Force redraw of canvases
+            setTimeout(function() {
+                if (window.manualGame) {
+                    window.manualGame.render();
+                }
+                if (window.aiGame) {
+                    window.aiGame.render();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html> 
