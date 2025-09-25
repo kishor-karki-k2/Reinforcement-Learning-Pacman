@@ -92,9 +92,7 @@ This project helps students understand:
 - Concepts of reinforcement learning
 - Differences between human and computer game-playing strategies
 
-## License
 
-[Insert your license information here]
 
 ## Acknowledgments
 
