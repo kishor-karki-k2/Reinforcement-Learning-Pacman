@@ -101,6 +101,3 @@ This project helps students understand:
 - Based on research in reinforcement learning from various academic sources
 - Inspired by classic Pacman gameplay and educational AI demonstrations
 
-## Contact
-
-[Your contact information or contribution guidelines] 
